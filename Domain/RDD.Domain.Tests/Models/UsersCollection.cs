@@ -1,11 +1,12 @@
 ﻿using RDD.Domain.Models;
+using RDD.Domain.Models.Querying;
 using RDD.Domain.Patchers;
 
 namespace RDD.Domain.Tests.Models
 {
     public class UsersCollection : RestCollection<User, int>
     {
-        public UsersCollection(IRepository<User> repository, IPatcherProvider patcherProvider, IInstanciator<User> instanciator)
-            : base(repository, patcherProvider, instanciator) { }
+        public UsersCollection(IRepository<User> repository, IPatcherProvider patcherProvider, IInstanciator<User> instanciator, QueryContext queryContext)
+            : base(repository, patcherProvider, instanciator, queryContext) { }
     }
 }

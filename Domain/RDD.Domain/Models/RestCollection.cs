@@ -17,8 +17,8 @@ namespace RDD.Domain.Models
 
         protected IInstanciator<TEntity> Instanciator { get;set;}
 
-        public RestCollection(IRepository<TEntity> repository, IPatcherProvider patcherProvider, IInstanciator<TEntity> instanciator)
-            : base(repository)
+        public RestCollection(IRepository<TEntity> repository, IPatcherProvider patcherProvider, IInstanciator<TEntity> instanciator, QueryContext queryContext)
+            : base(repository, queryContext)
         {
             PatcherProvider = patcherProvider;
             Repository = repository;
@@ -55,7 +55,7 @@ namespace RDD.Domain.Models
             return await UpdateAsync(entity, candidate, query);
         }
 
-        public virtual async Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)
+        public virtual async Task<IReadOnlyCollection<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)
         {
             query = query ?? new Query<TEntity>();
             query.Verb = HttpVerbs.Put;
@@ -64,7 +64,7 @@ namespace RDD.Domain.Models
 
             var ids = candidatesByIds.Select(d => d.Key).ToList();
             var expQuery = new Query<TEntity>(query, e => ids.Contains(e.Id));
-            var entities = (await GetAsync(expQuery)).Items.ToDictionary(el => el.Id);
+            var entities = (await GetAsync(expQuery)).ToDictionary(el => el.Id);
 
             foreach (KeyValuePair<TKey, ICandidate<TEntity, TKey>> kvp in candidatesByIds)
             {
@@ -94,7 +94,7 @@ namespace RDD.Domain.Models
                 Verb = HttpVerbs.Delete
             };
 
-            var entities = (await GetAsync(expQuery)).Items.ToDictionary(el => el.Id);
+            var entities = (await GetAsync(expQuery)).ToDictionary(el => el.Id);
 
             foreach (TKey id in ids)
             {

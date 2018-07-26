@@ -12,8 +12,11 @@ namespace RDD.Domain.Models
         where TEntity : class, IEntityBase<TKey>
         where TKey : IEquatable<TKey>
     {
-        public ReadOnlyRestCollection(IReadOnlyRepository<TEntity> repository)
+        private readonly QueryContext _queryContext;
+
+        public ReadOnlyRestCollection(IReadOnlyRepository<TEntity> repository, QueryContext queryContext)
         {
+            _queryContext = queryContext;
             Repository = repository;
         }
 
@@ -21,50 +24,41 @@ namespace RDD.Domain.Models
 
         public async Task<bool> AnyAsync(Query<TEntity> query)
         {
-            query.Options.NeedEnumeration = false;
-            query.Options.NeedCount = true;
+            _queryContext.Request.NeedEnumeration = false;
+            _queryContext.Request.NeedCount = true;
 
-            return (await GetAsync(query)).Count > 0;
+            await GetAsync(query);
+            return _queryContext.Response.TotalCount > 0;
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync() => (await GetAsync(new Query<TEntity>())).Items;
+        public async Task<IReadOnlyCollection<TEntity>> GetAllAsync() => (await GetAsync(new Query<TEntity>()));
 
-        public virtual async Task<ISelection<TEntity>> GetAsync(Query<TEntity> query)
+        public virtual async Task<IReadOnlyCollection<TEntity>> GetAsync(Query<TEntity> query)
         {
-            var count = 0;
-            IEnumerable<TEntity> items = new HashSet<TEntity>();
+            var totalCount = -1;
+            IReadOnlyCollection<TEntity> items = null;
 
             //Dans de rares cas on veut seulement le count des entités
-            if (query.Options.NeedCount && !query.Options.NeedEnumeration)
+            if (_queryContext.Request.NeedCount && !_queryContext.Request.NeedEnumeration)
             {
-                count = await Repository.CountAsync(query);
+                _queryContext.Response.TotalCount = totalCount = await Repository.CountAsync(query);
             }
 
             //En général on veut une énumération des entités
-            if (query.Options.NeedEnumeration)
+            if (_queryContext.Request.NeedEnumeration)
             {
                 items = await Repository.GetAsync(query);
-
-                count = items.Count();
-
-                //Si y'a plus d'items que le paging max ou que l'offset du paging n'est pas à 0, il faut compter la totalité des entités
-                if (query.Page.Offset > 0 || query.Page.Limit <= count)
-                {
-                    count = await Repository.CountAsync(query);
-                }
-
-                query.Page.TotalCount = count;
-
+                _queryContext.Response.TotalCount = totalCount != -1 ? totalCount : await Repository.CountAsync(query);
                 items = await Repository.PrepareAsync(items, query);
             }
 
             //Si c'était un PUT/DELETE, on en profite pour affiner la réponse
-            if (query.Verb != HttpVerbs.Get && count == 0)
+            if (query.Verb != HttpVerbs.Get && totalCount == 0)
             {
                 throw new NotFoundException(string.Format("No item of type {0} matching URL criteria while trying a {1}", typeof(TEntity).Name, query.Verb));
             }
 
-            return new Selection<TEntity>(items, count);
+            return items ?? new List<TEntity>();
         }
 
         /// <summary>
@@ -75,11 +69,11 @@ namespace RDD.Domain.Models
         /// <returns></returns>
         public virtual async Task<TEntity> GetByIdAsync(TKey id, Query<TEntity> query)
         {
-            TEntity result = (await GetAsync(new Query<TEntity>(query, e => e.Id.Equals(id)))).Items.FirstOrDefault();
+            TEntity result = (await GetAsync(new Query<TEntity>(query, e => e.Id.Equals(id)))).FirstOrDefault();
 
             if (result == null)
             {
-                throw new NotFoundException(string.Format("Resource with ID {0} not found", id));
+                throw new NotFoundException($"Resource with ID {id} not found");
             }
 
             return result;

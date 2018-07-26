@@ -14,6 +14,8 @@ using RDD.Infra;
 using RDD.Infra.Storage;
 using RDD.Web.Serialization;
 using System;
+using RDD.Domain.Models.Querying;
+using RDD.Web.Middleware;
 
 namespace RDD.Web.Helpers
 {
@@ -40,6 +42,9 @@ namespace RDD.Web.Helpers
             services.TryAddScoped(typeof(IAppController<,>), typeof(AppController<,>));
             services.TryAddScoped<IHttpContextAccessor, HttpContextAccessor>();
             services.TryAddScoped<IHttpContextHelper, HttpContextHelper>();
+            services.TryAddScoped<QueryContext>();
+            services.TryAddScoped<QueryResponse>();
+            services.TryAddScoped<QueryRequest>();
             services.TryAddScoped(typeof(ApiHelper<,>));
             return services;
         }
@@ -58,8 +63,6 @@ namespace RDD.Web.Helpers
             where TPrincipal : class, IPrincipal
         {
             services.TryAddScoped<IUrlProvider, UrlProvider>();
-            services.TryAddScoped<IEntitySerializer, EntitySerializer>();
-            services.TryAddScoped<IRDDSerializer, RDDSerializer>();
             services.TryAddScoped<IPrincipal, TPrincipal>();
             return services;
         }
@@ -81,7 +84,9 @@ namespace RDD.Web.Helpers
         /// <returns></returns>
         public static IApplicationBuilder UseRDD(this IApplicationBuilder app)
         {
-            return app.UseMiddleware<HttpStatusCodeExceptionMiddleware>();
+            return app
+                .UseMiddleware<QueryContextMiddleware>()
+                .UseMiddleware<HttpStatusCodeExceptionMiddleware>();
         }
     }
 

@@ -11,11 +11,13 @@ namespace RDD.Infra.Storage
     public class ReadOnlyRepository<TEntity> : IReadOnlyRepository<TEntity>
         where TEntity : class
     {
+        private readonly QueryRequest _queryRequest;
         protected IStorageService StorageService { get; set; }
         protected IRightExpressionsHelper RightExpressionsHelper { get; set; }
 
-        public ReadOnlyRepository(IStorageService storageService, IRightExpressionsHelper rightExpressionsHelper)
+        public ReadOnlyRepository(IStorageService storageService, IRightExpressionsHelper rightExpressionsHelper, QueryRequest queryRequest)
         {
+            _queryRequest = queryRequest;
             StorageService = storageService;
             RightExpressionsHelper = rightExpressionsHelper;
         }
@@ -28,7 +30,7 @@ namespace RDD.Infra.Storage
         {
             var entities = Set(query);
 
-            if (query.Options.CheckRights)
+            if (_queryRequest.CheckRights)
             {
                 entities = ApplyRights(entities, query);
             }
@@ -42,11 +44,11 @@ namespace RDD.Infra.Storage
             return Task.FromResult(entities.Count());
         }
 
-        public virtual Task<IEnumerable<TEntity>> GetAsync(Query<TEntity> query)
+        public virtual Task<IReadOnlyCollection<TEntity>> GetAsync(Query<TEntity> query)
         {
             var entities = Set(query);
 
-            if (query.Options.CheckRights)
+            if (_queryRequest.CheckRights)
             {
                 entities = ApplyRights(entities, query);
             }
@@ -59,9 +61,11 @@ namespace RDD.Infra.Storage
             return StorageService.EnumerateEntitiesAsync(entities);
         }
 
-        public virtual Task<IEnumerable<TEntity>> PrepareAsync(IEnumerable<TEntity> entities, Query<TEntity> query)
+        public virtual Task<IReadOnlyCollection<TEntity>> PrepareAsync(IEnumerable<TEntity> entities, Query<TEntity> query)
         {
-            return Task.FromResult(entities);
+            return Task.FromResult(entities is IReadOnlyCollection<TEntity> collection
+                ? collection
+                : entities?.ToList());
         }
 
         protected virtual IQueryable<TEntity> Set(Query<TEntity> query)
@@ -88,10 +92,13 @@ namespace RDD.Infra.Storage
 
             return orderBysConverter.Convert(entities, query.OrderBys);
         }
+
         protected virtual IQueryable<TEntity> ApplyPage(IQueryable<TEntity> entities, Query<TEntity> query)
         {
-            return entities.Skip(query.Page.Offset).Take(query.Page.Limit);
+            var skip = _queryRequest.PageOffset * _queryRequest.ItemPerPage;
+            return entities.Skip(skip).Take(_queryRequest.ItemPerPage);
         }
+
         protected virtual IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> entities, Query<TEntity> query)
         {
             return entities;
