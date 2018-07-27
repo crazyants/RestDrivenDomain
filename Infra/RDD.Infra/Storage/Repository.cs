@@ -8,8 +8,8 @@ namespace RDD.Infra.Storage
     public class Repository<TEntity> : ReadOnlyRepository<TEntity>, IRepository<TEntity>
         where TEntity : class
     {
-        public Repository(IStorageService storageService, IRightExpressionsHelper rightExpressionsHelper, QueryRequest queryRequest)
-            : base(storageService, rightExpressionsHelper, queryRequest)
+        public Repository(IStorageService storageService, IRightExpressionsHelper rightExpressionsHelper)
+            : base(storageService, rightExpressionsHelper)
         {
         }
 
