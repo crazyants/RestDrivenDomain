@@ -12,22 +12,21 @@ namespace RDD.Domain.Models
         where TEntity : class, IEntityBase<TEntity, TKey>
         where TKey : IEquatable<TKey>
     {
-        protected IPatcherProvider PatcherProvider { get; private set; }
-        protected new IRepository<TEntity> Repository { get; set; }
-
-        protected IInstanciator<TEntity> Instanciator { get;set;}
+        private readonly IPatcherProvider _patcherProvider;
+        private readonly IRepository<TEntity> _repository;
+        private readonly IInstanciator<TEntity> _instanciator;
 
         public RestCollection(IRepository<TEntity> repository, IPatcherProvider patcherProvider, IInstanciator<TEntity> instanciator)
             : base(repository)
         {
-            PatcherProvider = patcherProvider;
-            Repository = repository;
-            Instanciator = instanciator;
+            _patcherProvider = patcherProvider;
+            _repository = repository;
+            _instanciator = instanciator;
         }
-
+        
         public virtual Task<TEntity> CreateAsync(ICandidate<TEntity, TKey> candidate, Query<TEntity> query = null)
         {
-            TEntity entity = Instanciator.InstanciateNew(candidate);
+            TEntity entity = _instanciator.InstanciateNew(candidate);
 
             GetPatcher().Patch(entity, candidate.JsonValue);
 
@@ -40,7 +39,7 @@ namespace RDD.Domain.Models
 
             ValidateEntity(entity, null);
 
-            Repository.Add(entity);
+            _repository.Add(entity);
 
             return entity;
         }
@@ -55,12 +54,12 @@ namespace RDD.Domain.Models
             return await UpdateAsync(entity, candidate, query);
         }
 
-        public virtual async Task<IReadOnlyCollection<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)
+        public virtual async Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)
         {
             query = query ?? new Query<TEntity>();
             query.Verb = HttpVerbs.Put;
 
-            var result = new HashSet<TEntity>();
+            var result = new List<TEntity>();
 
             var ids = candidatesByIds.Select(d => d.Key).ToList();
             var expQuery = new Query<TEntity>(query, e => ids.Contains(e.Id));
@@ -84,7 +83,7 @@ namespace RDD.Domain.Models
                 Verb = HttpVerbs.Delete
             });
 
-            Repository.Remove(entity);
+            _repository.Remove(entity);
         }
 
         public virtual async Task DeleteByIdsAsync(IList<TKey> ids)
@@ -100,11 +99,11 @@ namespace RDD.Domain.Models
             {
                 var entity = entities[id];
 
-                Repository.Remove(entity);
+                _repository.Remove(entity);
             }
         }
 
-        protected virtual IPatcher GetPatcher() => new ObjectPatcher(PatcherProvider);
+        protected virtual IPatcher GetPatcher() => new ObjectPatcher(_patcherProvider);
 
         protected virtual void ForgeEntity(TEntity entity) { }
 

@@ -14,10 +14,10 @@ namespace RDD.Domain.Models
     {
         public ReadOnlyRestCollection(IReadOnlyRepository<TEntity> repository)
         {
-            Repository = repository;
+            _readOnlyRepository = repository;
         }
 
-        protected IReadOnlyRepository<TEntity> Repository { get; set; }
+        private readonly IReadOnlyRepository<TEntity> _readOnlyRepository;
 
         public async Task<bool> AnyAsync(Query<TEntity> query)
         {
@@ -38,15 +38,15 @@ namespace RDD.Domain.Models
             //Dans de rares cas on veut seulement le count des entités
             if (query.NeedCount && !query.NeedEnumeration)
             {
-                query.QueryMetadata.TotalCount = totalCount = await Repository.CountAsync(query);
+                query.QueryMetadata.TotalCount = totalCount = await _readOnlyRepository.CountAsync(query);
             }
 
             //En général on veut une énumération des entités
             if (query.NeedEnumeration)
             {
-                items = await Repository.GetAsync(query);
-                query.QueryMetadata.TotalCount = totalCount != -1 ? totalCount : await Repository.CountAsync(query);
-                items = await Repository.PrepareAsync(items, query);
+                items = await _readOnlyRepository.GetAsync(query);
+                query.QueryMetadata.TotalCount = totalCount != -1 ? totalCount : await _readOnlyRepository.CountAsync(query);
+                items = await _readOnlyRepository.PrepareAsync(items, query);
             }
 
             //Si c'était un PUT/DELETE, on en profite pour affiner la réponse
@@ -55,7 +55,7 @@ namespace RDD.Domain.Models
                 throw new NotFoundException(string.Format("No item of type {0} matching URL criteria while trying a {1}", typeof(TEntity).Name, query.Verb));
             }
 
-            return items ?? new List<TEntity>();
+            return items ?? Enumerable.Empty<TEntity>();
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace RDD.Domain.Models
             }
             catch
             {
-                return null;
+                return default;
             }
         }
 
