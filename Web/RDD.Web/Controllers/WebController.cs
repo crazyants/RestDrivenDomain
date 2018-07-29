@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RDD.Web.Querying;
 
 namespace RDD.Web.Controllers
 {
@@ -17,8 +18,8 @@ namespace RDD.Web.Controllers
         where TEntity : class, IEntityBase<TEntity, TKey>
         where TKey : IEquatable<TKey>
     {
-        protected WebController(IAppController<TEntity, TKey> appController, ApiHelper<TEntity, TKey> helper) 
-            : base(appController, helper)
+        protected WebController(IAppController<TEntity, TKey> appController, ICandidateFactory<TEntity, TKey> helper, IQueryFactory queryFactory) 
+            : base(appController, helper, queryFactory)
         {
         }
     }
@@ -28,8 +29,9 @@ namespace RDD.Web.Controllers
         where TEntity : class, IEntityBase<TEntity, TKey>
         where TKey : IEquatable<TKey>
     {
-        protected WebController(TAppController appController, ApiHelper<TEntity, TKey> helper)
-            : base(appController, helper)
+        
+        protected WebController(TAppController appController, ICandidateFactory<TEntity, TKey> helper, IQueryFactory queryFactory)
+            : base(appController, helper, queryFactory)
         {
         }
 
@@ -71,7 +73,7 @@ namespace RDD.Web.Controllers
 
         protected virtual async Task<ActionResult<TEntity>> ProtectedPostAsync()
         {
-            Query<TEntity> query = Helper.CreateQuery(HttpVerbs.Post);
+            Query<TEntity> query = QueryFactory.NewFromHttpRequest<TEntity, TKey>(HttpVerbs.Post);
             ICandidate<TEntity, TKey> candidate = Helper.CreateCandidate();
 
             TEntity entity = await AppController.CreateAsync(candidate, query);
@@ -81,7 +83,7 @@ namespace RDD.Web.Controllers
 
         protected virtual async Task<ActionResult<TEntity>> ProtectedPutAsync(TKey id)
         {
-            Query<TEntity> query = Helper.CreateQuery(HttpVerbs.Put);
+            Query<TEntity> query = QueryFactory.NewFromHttpRequest<TEntity, TKey>(HttpVerbs.Put);
             ICandidate<TEntity, TKey> candidate = Helper.CreateCandidate();
 
             TEntity entity = await AppController.UpdateByIdAsync(id, candidate, query);
@@ -91,7 +93,7 @@ namespace RDD.Web.Controllers
 
         protected virtual async Task<ActionResult<IEnumerable<TEntity>>> ProtectedPutAsync()
         {
-            Query<TEntity> query = Helper.CreateQuery(HttpVerbs.Put);
+            Query<TEntity> query = QueryFactory.NewFromHttpRequest<TEntity, TKey>(HttpVerbs.Put);
             IEnumerable<ICandidate<TEntity, TKey>> candidates = Helper.CreateCandidates();
 
             //Datas est censé contenir un tableau d'objet ayant une prop "id" qui permet de les identifier individuellement
@@ -116,7 +118,7 @@ namespace RDD.Web.Controllers
 
         protected virtual async Task<IActionResult> ProtectedDeleteAsync()
         {
-            Query<TEntity> query = Helper.CreateQuery(HttpVerbs.Delete);
+            Query<TEntity> query = QueryFactory.NewFromHttpRequest<TEntity, TKey>(HttpVerbs.Delete);
             IEnumerable<ICandidate<TEntity, TKey>> candidates = Helper.CreateCandidates();
 
             //Datas est censé contenir un tableau d'objet ayant une prop "id" qui permet de les identifier individuellement
