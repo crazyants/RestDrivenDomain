@@ -19,11 +19,7 @@ namespace RDD.Infra.Storage
             StorageService = storageService;
             RightExpressionsHelper = rightExpressionsHelper;
         }
-
-        public virtual Task<int> CountAsync()
-        {
-            return CountAsync(new Query<TEntity>());
-        }
+        
         public virtual Task<int> CountAsync(Query<TEntity> query)
         {
             var entities = Set(query);
@@ -37,6 +33,7 @@ namespace RDD.Infra.Storage
 
             return CountEntities(entities);
         }
+
         protected virtual Task<int> CountEntities(IQueryable<TEntity> entities)
         {
             return Task.FromResult(entities.Count());
