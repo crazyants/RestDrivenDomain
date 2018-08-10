@@ -40,23 +40,6 @@ namespace RDD.Domain.Tests
         }
 
         [Fact]
-        public async Task TryGetById_SHOULD_not_throw_exception_and_return_null_WHEN_id_does_not_exist()
-        {
-            using (var storage = _newStorage(Guid.NewGuid().ToString()))
-            {
-                var user = new User { Id = 2 };
-                var repo = new Repository<User>(storage, _rightsService);
-                var users = new UsersCollection(repo, _patcherProvider, Instanciator);
-
-                await users.CreateAsync(user);
-
-                await storage.SaveChangesAsync();
-
-                Assert.Null(await users.TryGetByIdAsync(0));
-            }
-        }
-
-        [Fact]
         public async Task Put_SHOULD_throw_notfound_exception_WHEN_unexisting_entity_()
         {
             using (var storage = _newStorage(Guid.NewGuid().ToString()))
