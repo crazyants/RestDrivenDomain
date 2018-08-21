@@ -13,7 +13,7 @@ namespace RDD.Domain
         Task<TEntity> CreateAsync(TEntity entity, Query<TEntity> query = null);
         Task<TEntity> UpdateByIdAsync(TKey id, ICandidate<TEntity, TKey> candidate, Query<TEntity> query = null);
         Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null);
-
+        Task<TEntity> UpdateByIdAsync(TKey id, TEntity entity);
         Task DeleteByIdAsync(TKey id);
         Task DeleteByIdsAsync(IList<TKey> ids);
     }

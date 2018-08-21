@@ -14,8 +14,7 @@ namespace RDD.Domain.Models
     {
         protected IPatcherProvider PatcherProvider { get; private set; }
         protected new IRepository<TEntity> Repository { get; set; }
-
-        protected IInstanciator<TEntity> Instanciator { get;set;}
+        protected IInstanciator<TEntity> Instanciator { get; set; }
 
         public RestCollection(IRepository<TEntity> repository, IPatcherProvider patcherProvider, IInstanciator<TEntity> instanciator)
             : base(repository)
@@ -49,10 +48,24 @@ namespace RDD.Domain.Models
         {
             query = query ?? new Query<TEntity>();
             query.Verb = HttpVerbs.Put;
-
             TEntity entity = await GetByIdAsync(id, query);
 
             return await UpdateAsync(entity, candidate, query);
+        }
+
+        public virtual async Task<TEntity> UpdateByIdAsync(TKey id, TEntity entity)
+        {
+            TEntity found = await GetByIdAsync(id, new Query<TEntity> { Verb = HttpVerbs.Put });
+            if (found == null)
+            {
+                return null;
+            }
+
+            ValidateEntity(entity, null);
+
+            Repository.Update<TEntity, TKey>(id, entity);
+
+            return entity;
         }
 
         public virtual async Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)

@@ -13,6 +13,7 @@ namespace RDD.Application
         Task<TEntity> CreateAsync(ICandidate<TEntity, TKey> candidate, Query<TEntity> query);
         Task<TEntity> UpdateByIdAsync(TKey id, ICandidate<TEntity, TKey> candidate, Query<TEntity> query);
         Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query);
+        Task<TEntity> UpdateByIdAsync(TEntity candidateEntity);
         Task DeleteByIdAsync(TKey id);
         Task DeleteByIdsAsync(IList<TKey> ids);
     }
