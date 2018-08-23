@@ -36,10 +36,8 @@ namespace RDD.Domain.Models
         public virtual async Task<TEntity> CreateAsync(TEntity entity, Query<TEntity> query = null)
         {
             ForgeEntity(entity);
-
-            ValidateEntity(entity, null);
-
-            if (!OnBeforeCreate(entity))
+             
+            if (!ValidateEntity(entity, null) || !OnBeforeCreate(entity))
             {
                 return null;
             }
@@ -106,7 +104,7 @@ namespace RDD.Domain.Models
 
         protected virtual bool ValidateEntity(TEntity entity, TEntity oldEntity) => true;
 
-        protected virtual bool OnBeforeUpdate(TEntity entity) => true;
+        protected virtual bool OnBeforeUpdateEntity(TEntity entity) => true;
 
         protected virtual Task OnBeforePatchEntity(TEntity entity, ICandidate<TEntity, TKey> candidate) => Task.CompletedTask;
         
@@ -134,7 +132,7 @@ namespace RDD.Domain.Models
 
         private void UpdateEntityCore(TKey id, TEntity entity, TEntity oldEntity)
         {
-            if (!ValidateEntity(entity, oldEntity) || !OnBeforeUpdate(entity))
+            if (!ValidateEntity(entity, oldEntity) || !OnBeforeUpdateEntity(entity))
             {
                 return;
             }
