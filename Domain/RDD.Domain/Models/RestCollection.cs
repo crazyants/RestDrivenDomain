@@ -39,10 +39,22 @@ namespace RDD.Domain.Models
 
             ValidateEntity(entity, null);
 
+            if (!OnBeforeCreate(entity))
+            {
+                return null;
+            }
+
             Repository.Add(entity);
 
             return entity;
         }
+
+        /// <summary>
+        /// Called before the entity is created
+        /// </summary>
+        /// <param name="entity">The entity</param>
+        /// <returns>false if the entity should not be created</returns>
+        protected virtual bool OnBeforeCreate(TEntity entity) => true;
 
         public virtual async Task<TEntity> UpdateByIdAsync(TKey id, ICandidate<TEntity, TKey> candidate, Query<TEntity> query = null)
         {
@@ -90,33 +102,6 @@ namespace RDD.Domain.Models
             return result;
         }
 
-        public virtual async Task DeleteByIdAsync(TKey id)
-        {
-            TEntity entity = await GetByIdAsync(id, new Query<TEntity>
-            {
-                Verb = HttpVerbs.Delete
-            });
-
-            Repository.Remove(entity);
-        }
-
-        public virtual async Task DeleteByIdsAsync(IList<TKey> ids)
-        {
-            var expQuery = new Query<TEntity>(e => ids.Contains(e.Id))
-            {
-                Verb = HttpVerbs.Delete
-            };
-
-            var entities = (await GetAsync(expQuery)).Items.ToDictionary(el => el.Id);
-
-            foreach (TKey id in ids)
-            {
-                var entity = entities[id];
-
-                Repository.Remove(entity);
-            }
-        }
-
         protected virtual IPatcher GetPatcher() => new ObjectPatcher(PatcherProvider);
 
         protected virtual void ForgeEntity(TEntity entity) { }
@@ -146,5 +131,34 @@ namespace RDD.Domain.Models
 
             return entity;
         }
+
+
+        public virtual async Task DeleteByIdAsync(TKey id)
+        {
+            TEntity entity = await GetByIdAsync(id, new Query<TEntity>
+            {
+                Verb = HttpVerbs.Delete
+            });
+
+            Repository.Remove(entity);
+        }
+
+        public virtual async Task DeleteByIdsAsync(IList<TKey> ids)
+        {
+            var expQuery = new Query<TEntity>(e => ids.Contains(e.Id))
+            {
+                Verb = HttpVerbs.Delete
+            };
+
+            var entities = (await GetAsync(expQuery)).Items.ToDictionary(el => el.Id);
+
+            foreach (TKey id in ids)
+            {
+                var entity = entities[id];
+
+                Repository.Remove(entity);
+            }
+        }
+
     }
 }
