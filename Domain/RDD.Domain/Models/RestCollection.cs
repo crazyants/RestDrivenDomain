@@ -106,6 +106,8 @@ namespace RDD.Domain.Models
 
         protected virtual bool ValidateEntity(TEntity entity, TEntity oldEntity) => true;
 
+        protected virtual bool OnBeforeUpdate(TEntity entity) => true;
+
         protected virtual Task OnBeforePatchEntity(TEntity entity, ICandidate<TEntity, TKey> candidate) => Task.CompletedTask;
         
         /// <summary>
@@ -132,7 +134,7 @@ namespace RDD.Domain.Models
 
         private void UpdateEntityCore(TKey id, TEntity entity, TEntity oldEntity)
         {
-            if (!ValidateEntity(entity, oldEntity))
+            if (!ValidateEntity(entity, oldEntity) || !OnBeforeUpdate(entity))
             {
                 return;
             }
