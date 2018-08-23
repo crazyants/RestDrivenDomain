@@ -64,7 +64,7 @@ namespace RDD.Domain.Models
                 throw new NotFoundException(string.Format("No item of type {0} matching URL criteria while trying a {1}", typeof(TEntity).Name, query.Verb));
             }
 
-            return new Selection<TEntity>(OnAfterGet(items), count);
+            return new Selection<TEntity>(await OnAfterGet(items), count);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace RDD.Domain.Models
         /// </summary>
         /// <param name="source">Original items</param>
         /// <returns>Altered items</returns>
-        protected virtual IEnumerable<TEntity> OnAfterGet(IEnumerable<TEntity> source) => source;
+        protected virtual Task<IEnumerable<TEntity>> OnAfterGet(IEnumerable<TEntity> source) => Task.FromResult(source);
 
         /// <summary>
         /// Si on ne trouve pas l'entité, on renvoie explicitement un NotFound
