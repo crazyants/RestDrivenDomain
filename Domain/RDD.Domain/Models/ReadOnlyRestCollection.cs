@@ -31,6 +31,8 @@ namespace RDD.Domain.Models
 
         public virtual async Task<ISelection<TEntity>> GetAsync(Query<TEntity> query)
         {
+            await OnBeforeGetAsync();
+
             var count = 0;
             IEnumerable<TEntity> items = new HashSet<TEntity>();
 
@@ -64,7 +66,7 @@ namespace RDD.Domain.Models
                 throw new NotFoundException(string.Format("No item of type {0} matching URL criteria while trying a {1}", typeof(TEntity).Name, query.Verb));
             }
 
-            return new Selection<TEntity>(await OnAfterGet(items), count);
+            return new Selection<TEntity>(await OnAfterGetAsync(items), count);
         }
 
         /// <summary>
@@ -72,7 +74,14 @@ namespace RDD.Domain.Models
         /// </summary>
         /// <param name="source">Original items</param>
         /// <returns>Altered items</returns>
-        protected virtual Task<IEnumerable<TEntity>> OnAfterGet(IEnumerable<TEntity> source) => Task.FromResult(source);
+        protected virtual Task<IEnumerable<TEntity>> OnAfterGetAsync(IEnumerable<TEntity> source) 
+            => Task.FromResult(source);
+
+        /// <summary>
+        /// Called before any Get
+        /// </summary>
+        /// <returns></returns>
+        protected virtual Task OnBeforeGetAsync() => Task.CompletedTask;
 
         /// <summary>
         /// Si on ne trouve pas l'entité, on renvoie explicitement un NotFound
