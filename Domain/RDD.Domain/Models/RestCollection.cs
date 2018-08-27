@@ -121,13 +121,13 @@ namespace RDD.Domain.Models
 
             TEntity newEntity = oldEntity.Clone();
 
-            GetPatcher().Patch(oldEntity, candidate.JsonValue);
+            GetPatcher().Patch(newEntity, candidate.JsonValue);
 
             await OnAfterPatchEntity(oldEntity, newEntity, candidate, query);
 
             await UpdateEntityCore((TKey)newEntity.GetId(), newEntity, oldEntity);
 
-            return oldEntity;
+            return newEntity;
         }
 
         private async Task UpdateEntityCore(TKey id, TEntity entity, TEntity oldEntity)
