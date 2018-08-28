@@ -71,9 +71,9 @@ namespace RDD.Domain.Models
                 return null;
             }
 
-            await UpdateEntityCore(id, entity, oldEntity);
+            bool updated = await UpdateEntityCore(id, entity, oldEntity);
 
-            return entity;
+            return updated ? entity : oldEntity;
         }
 
         public virtual async Task<IEnumerable<TEntity>> UpdateByIdsAsync(IDictionary<TKey, ICandidate<TEntity, TKey>> candidatesByIds, Query<TEntity> query = null)
@@ -125,19 +125,21 @@ namespace RDD.Domain.Models
 
             await OnAfterPatchEntity(oldEntity, newEntity, candidate, query);
 
-            await UpdateEntityCore((TKey)newEntity.GetId(), newEntity, oldEntity);
+            bool updated = await UpdateEntityCore((TKey)newEntity.GetId(), newEntity, oldEntity);
 
-            return newEntity;
+            return updated ? newEntity : oldEntity;
         }
 
-        private async Task UpdateEntityCore(TKey id, TEntity entity, TEntity oldEntity)
+        private async Task<bool> UpdateEntityCore(TKey id, TEntity entity, TEntity oldEntity)
         {
             if (!await ValidateEntity(entity, oldEntity) || !await OnBeforeUpdateEntity(entity))
             {
-                return;
+                return false;
             }
 
             Repository.Update<TEntity, TKey>(id, entity);
+
+            return true;
         }
 
 
