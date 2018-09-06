@@ -21,15 +21,19 @@ namespace RDD.Web.Querying
             return new ExpressionSelectorTree<TClass>();
         }
 
-        private IExpressionSelectorTree<TClass> ParseAllProperties<TClass>()
+        public IExpressionSelectorTree ParseAllProperties(Type classType)
+        {
+            var fields = string.Join(",", classType.GetProperties().Select(p => p.Name));
+            return ParseFields(classType, fields);
+        }
+
+        public IExpressionSelectorTree<TClass> ParseAllProperties<TClass>()
         {
             var fields = string.Join(",", typeof(TClass).GetProperties().Select(p => p.Name));
             return ParseFields<TClass>(fields);
         }
 
-        private IExpressionSelectorTree<TClass> ParseFields<TClass>(string fields)
-        {
-            return new ExpressionSelectorParser().ParseTree<TClass>(fields);
-        }
+        private IExpressionSelectorTree<TClass> ParseFields<TClass>(string fields) => new ExpressionSelectorParser().ParseTree<TClass>(fields);
+        private IExpressionSelectorTree ParseFields(Type classType, string fields) => new ExpressionSelectorParser().ParseTree(classType, fields);
     }
 }
