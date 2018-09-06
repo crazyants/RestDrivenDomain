@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using RDD.Domain;
+using RDD.Domain.Helpers;
 using RDD.Domain.Mocks;
 using RDD.Web.Helpers;
+using RDD.Web.Serialization;
+using RDD.Web.Serialization.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,6 +69,28 @@ namespace RDD.Web.Tests.Services
             var configs = provider.GetRequiredService<IEnumerable<IInheritanceConfiguration>>();
 
             Assert.Empty(configs);
+        }
+
+        class Principal : IPrincipal
+        {
+            public int Id => throw new NotImplementedException();
+            public string Token { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+            public string Name => throw new NotImplementedException();
+            public Culture Culture => throw new NotImplementedException();
+            public PrincipalType Type => throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void TestRddSerializationRegister()
+        {
+            var services = new ServiceCollection();
+
+            services.AddRDDSerialization<Principal>();
+            var provider = services.BuildServiceProvider();
+
+            Assert.NotNull(provider.GetRequiredService<ISerializerProvider>());
+            Assert.NotNull(provider.GetRequiredService<IRDDSerializer>());
+            Assert.NotNull(provider.GetRequiredService<IPrincipal>());
         }
     }
 }

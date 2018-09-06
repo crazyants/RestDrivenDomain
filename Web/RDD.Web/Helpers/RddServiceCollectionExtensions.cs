@@ -99,6 +99,7 @@ namespace RDD.Web.Helpers
             services.AddMemoryCache();
             services.TryAddScoped<IReflectionProvider, ReflectionProvider>();
 
+            services.TryAddScoped<IHttpContextAccessor, HttpContextAccessor>();
             services.TryAddScoped<IUrlProvider, UrlProvider>();
             services.TryAddScoped<ISerializerProvider, SerializerProvider>();
             services.TryAddScoped<IRDDSerializer, RDDSerializer>();
